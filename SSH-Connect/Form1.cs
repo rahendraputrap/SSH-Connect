@@ -1,3 +1,6 @@
+using Renci.SshNet;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+
 namespace SSH_Connect
 {
     public partial class Form1 : Form
@@ -16,12 +19,49 @@ namespace SSH_Connect
         {
             string stringIP = inIP.Text;
             string stringPort = inPort.Text;
+            string username = "";
+            string password = "";
+
+            if (string.IsNullOrEmpty(stringIP) || string.IsNullOrEmpty(stringPort))
+            {
+                MessageBox.Show("IP dan Port tidak boleh kosong.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             label3.Visible = true;
-            label4.Visible = true;
 
-            label3.Text = stringIP;
-            label4.Text = stringPort;
+            try
+            {
+                int port = int.Parse(stringPort);
+
+                var connectionInfo = new ConnectionInfo(stringIP, port, username,
+                    new PasswordAuthenticationMethod(username, password));
+
+                using (var sshClient = new SshClient(connectionInfo))
+                {
+                    sshClient.Connect();
+
+                    if (sshClient.IsConnected)
+                    {
+                        MessageBox.Show("Berhasil terhubung ke server SSH!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        label3.Text = "Sukses";
+
+                        var command = sshClient.RunCommand("whoami");
+                        MessageBox.Show($"User yang terhubung: {command.Result.Trim()}", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Gagal terhubung ke server SSH. \nError: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                label3.Text = "Gagal";
+            }
+
+            //label3.Visible = true;
+            //label4.Visible = true;
+
+            //label3.Text = stringIP;
+            //label4.Text = stringPort;
 
         }
 
